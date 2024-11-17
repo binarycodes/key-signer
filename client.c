@@ -7,10 +7,8 @@
 #include <unistd.h>
 
 #include "client.h"
+#include "common.h"
 #include "logger.h"
-
-const size_t MAX_MESSAGE_SIZE = 256;
-const int ERROR_RETURN_VALUE = -1;
 
 int main(int argc, char *argv[]) {
 
@@ -25,8 +23,8 @@ int main(int argc, char *argv[]) {
 
   printf("Please enter the message: ");
 
-  char buffer[MAX_MESSAGE_SIZE];
-  memset(buffer, 0, MAX_MESSAGE_SIZE);
+  char buffer[MAX_CLIENT_MESSAGE_SIZE];
+  memset(buffer, 0, MAX_CLIENT_MESSAGE_SIZE);
   fgets(buffer, 255, stdin);
 
   int n = write(sock_fd, buffer, strlen(buffer));
@@ -34,7 +32,7 @@ int main(int argc, char *argv[]) {
     log_error("writing to socket");
   }
 
-  memset(buffer, 0, MAX_MESSAGE_SIZE);
+  memset(buffer, 0, MAX_CLIENT_MESSAGE_SIZE);
   n = read(sock_fd, buffer, 255);
 
   if (n < 0) {

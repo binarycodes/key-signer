@@ -6,15 +6,14 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include "common.h"
 #include "logger.h"
-
-const size_t MAX_CLIENT_MESSAGE_SIZE = 256;
-const size_t MAX_CLIENTS_ALLOWED = 5;
+#include "server.h"
 
 int main(int argc, char *argv[]) {
 
   if (argc < 2) {
-    log_error("no port provided");
+    show_usage(argv[0]);
   }
 
   const int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -48,21 +47,28 @@ int main(int argc, char *argv[]) {
     log_error("on accept");
   }
 
-  /* read characters from the socker connection here */
-  char buffer[MAX_CLIENT_MESSAGE_SIZE];
-
-  memset(buffer, 0, sizeof(buffer));
-  int n = read(newsock_fd, buffer, MAX_CLIENT_MESSAGE_SIZE);
-  if (n < 0) {
-    log_error("reading from socket");
+  ks_read_message read_message = read_client_message(newsock_fd);
+  if (read_message.return_value == ERROR_RETURN_VALUE) {
+    exit(1);
   }
 
-  printf("Here is the message...\n%s", buffer);
+  printf("Here is the message...\n%s", read_message.message);
 
-  n = write(newsock_fd, "message received", 17);
-  if (n < 0) {
-    log_error("writing to socket");
+  int result = write_client_message(newsock_fd, "message received");
+
+  if (result == ERROR_RETURN_VALUE) {
+    exit(1);
   }
 
   return 0;
+}
+
+void show_usage(char *application_name) {
+  const char *usage_format = "usage: %s [port]";
+  char *usage = (char *)malloc(
+      sizeof(char) * (strlen(usage_format) + strlen(application_name)));
+
+  snprintf(usage, strlen(usage_format) + strlen(application_name), usage_format,
+           application_name);
+  log_error(usage);
 }
