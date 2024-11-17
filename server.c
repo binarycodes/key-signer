@@ -1,4 +1,5 @@
 #include <netinet/in.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,13 +13,17 @@
 
 int main(int argc, char *argv[]) {
 
+  struct sigaction sa = {.sa_handler = &handle_sigterm};
+  sigaction(SIGTERM, &sa, NULL);
+  sigaction(SIGINT, &sa, NULL);
+
   if (argc < 2) {
     show_usage(argv[0]);
   }
 
   const int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
   if (sock_fd < 0) {
-    log_error("opening socket");
+    log_error("on socket open");
   }
 
   const int socket_option = 1;
@@ -34,30 +39,37 @@ int main(int argc, char *argv[]) {
   server_addr.sin_addr.s_addr = INADDR_ANY;
 
   if (bind(sock_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-    log_error("on binding");
+    log_error("on socket bind");
   }
 
-  listen(sock_fd, MAX_CLIENTS_ALLOWED);
-
-  struct sockaddr_in client_addr;
-  socklen_t client_len = sizeof(client_addr);
-  const int newsock_fd =
-      accept(sock_fd, (struct sockaddr *)&client_addr, &client_len);
-  if (newsock_fd < 0) {
-    log_error("on accept");
+  if (listen(sock_fd, MAX_CLIENTS_ALLOWED) < 0) {
+    log_error("on listen");
   }
 
-  ks_read_message read_message = read_client_message(newsock_fd);
-  if (read_message.return_value == ERROR_RETURN_VALUE) {
-    exit(1);
-  }
+  while (true) {
+    struct sockaddr_in client_addr;
+    socklen_t client_len = sizeof(client_addr);
+    const int connection_fd =
+        accept(sock_fd, (struct sockaddr *)&client_addr, &client_len);
+    if (connection_fd < 0) {
+      log_error("on accept");
+    }
 
-  printf("Here is the message...\n%s", read_message.message);
+    ks_read_message read_message = read_client_message(connection_fd);
+    if (read_message.return_value == ERROR_RETURN_VALUE) {
+      exit(1);
+    }
 
-  int result = write_client_message(newsock_fd, "message received");
+    printf("Here is the message...\n%s", read_message.message);
 
-  if (result == ERROR_RETURN_VALUE) {
-    exit(1);
+    int result = write_client_message(connection_fd, "message received");
+
+    if (result == ERROR_RETURN_VALUE) {
+      exit(1);
+    }
+
+    /* close client connection */
+    close(connection_fd);
   }
 
   return 0;
@@ -71,4 +83,11 @@ void show_usage(char *application_name) {
   snprintf(usage, strlen(usage_format) + strlen(application_name), usage_format,
            application_name);
   log_error(usage);
+}
+
+void handle_sigterm(int signal) {
+  fprintf(stdout, "\n");
+  log_info("cleaning up process state ...");
+  log_info("exiting process now...");
+  exit(0);
 }
