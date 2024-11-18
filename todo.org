@@ -1,0 +1,25 @@
+* Project Management
+** TODO general
+- [ ] require all communications to be encrypted
+- [ ] extend the client to also include user ssh key signing
+- [ ] figure out a method to distribute CA certificate (public) with user clients
+- [ ] figure out a method to generate a per client CA certificate that is used for signing only that client's ssh key
+- [ ] add command line argument parser to both server and client
+** TODO key signer server [0/6]
+- [ ] receive public ssh key from the client
+- [ ] sign the key with the CA certificate
+- [ ] send the signed public key back to the client
+- [ ] require client to authenticate with a pre-shared secret token
+- [ ] read configuration file on server startup
+- [ ] configuration file should handle the following
+  - [ ] number of clients allowed
+  - [ ] timeout - how long to wait for the client to send a message
+  - [ ] the path to the CA certificate to be used for signing
+  - [ ] subnet of allowed clients
+  - [ ] secret token required from the client before progressing
+** TODO key signer client [0/5]
+- [ ] authenticate to the server with a pre-shared secret token
+- [ ] send the public ssh key to the server
+- [ ] receive the signed key from the server
+- [ ] write the signer key into /etc/ssh/ ... wherever appropriate
+- [ ] argument to identify which key to get signed in case of multiple keys (rsa / ed25519 etc.)
