@@ -17,9 +17,9 @@ const char *message_prefix_for_level(ks_msg_type level) {
 }
 
 void log_message(ks_msg_type msg_level, const char *msg) {
-  const char *fixed_msg = message_prefix_for_level(msg_level);
-  char *message_info = (char *)malloc(strlen(msg) + strlen(fixed_msg));
-  strncpy(message_info, fixed_msg, strlen(fixed_msg));
+  const char *message_prefix = message_prefix_for_level(msg_level);
+  char *message_info = (char *)malloc(strlen(msg) + strlen(message_prefix));
+  strncpy(message_info, message_prefix, strlen(message_prefix));
   strncat(message_info, msg, strlen(msg));
 
   if (msg_level == ERROR) {
