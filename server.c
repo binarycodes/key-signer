@@ -1,3 +1,4 @@
+#include <bits/types/struct_iovec.h>
 #include <netinet/in.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -54,8 +55,9 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    log_info(message.message);
+    log_info_p("received message: ", message.message);
 
+    log_info("sending acknowledgement to client");
     int result = write_message(connection_fd, "hello message received");
 
     if (result == ERROR_RETURN_VALUE) {
@@ -83,11 +85,11 @@ void shutdown_and_close_socket(int socket_fd) {
 
 void show_usage(char *application_name) {
   const char *usage_format = "usage: %s [port]";
-  char *usage = (char *)malloc(
-      sizeof(char) * (strlen(usage_format) + strlen(application_name)));
 
-  snprintf(usage, strlen(usage_format) + strlen(application_name), usage_format,
-           application_name);
+  const size_t message_length = strlen(usage_format) + strlen(application_name);
+  char *usage = (char *)malloc(sizeof(char) * message_length);
+
+  snprintf(usage, message_length, usage_format, application_name);
   exit_error(usage);
 }
 
@@ -108,9 +110,7 @@ int create_server_socket() {
   setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &socket_option,
              sizeof(socket_option));
 
-  struct linger so_linger;
-  so_linger.l_linger = 30;
-  so_linger.l_onoff = true;
+  struct linger so_linger = {.l_linger = 30, .l_onoff = true};
   setsockopt(sock_fd, SOL_SOCKET, SO_LINGER, &so_linger, sizeof(so_linger));
 
   return sock_fd;
