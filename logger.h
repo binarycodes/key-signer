@@ -7,5 +7,6 @@ void log_message(ks_msg_type msg_level, const char *msg);
 
 void log_info(const char *msg);
 void log_error(const char *msg);
+void exit_error(const char *msg);
 
 #endif /* CUSTOM_LOGGER_H */

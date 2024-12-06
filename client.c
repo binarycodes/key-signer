@@ -18,40 +18,42 @@ int main(int argc, char *argv[]) {
 
   const int sock_fd = connect_to_server(argv[1], argv[2]);
   if (sock_fd < 0) {
-    log_error("connecting to server failed");
+    exit_error("connecting to server failed");
   }
 
   printf("Please enter the message: ");
 
-  char buffer[MAX_CLIENT_MESSAGE_SIZE];
-  memset(buffer, 0, MAX_CLIENT_MESSAGE_SIZE);
-  fgets(buffer, 255, stdin);
+  char buffer[MAX_MESSAGE_SIZE];
+  memset(buffer, 0, MAX_MESSAGE_SIZE);
+  fgets(buffer, MAX_MESSAGE_SIZE, stdin);
+  buffer[strcspn(buffer, "\n")] = 0;
 
-  int n = write(sock_fd, buffer, strlen(buffer));
+  int n = write_message(sock_fd, buffer);
   if (n < 0) {
-    log_error("writing to socket");
+    exit(1);
   }
 
-  memset(buffer, 0, MAX_CLIENT_MESSAGE_SIZE);
-  n = read(sock_fd, buffer, 255);
+  memset(buffer, 0, MAX_MESSAGE_SIZE);
+  ks_read_message message = read_message(sock_fd);
 
-  if (n < 0) {
-    log_error("reading from socket");
+  if (message.length < 0) {
+    exit(1);
   }
 
-  printf("%s\n", buffer);
+  log_info(message.message);
+
+  shutdown(sock_fd, SHUT_WR);
   close(sock_fd);
   return 0;
 }
 
 void show_usage(char *application_name) {
   const char *usage_format = "usage: %s [hostname] [port]";
-  char *usage = (char *)malloc(
-      sizeof(char) * (strlen(usage_format) + strlen(application_name)));
+  const int message_length = strlen(usage_format) + strlen(application_name);
 
-  snprintf(usage, strlen(usage_format) + strlen(application_name), usage_format,
-           application_name);
-  log_error(usage);
+  char *usage = (char *)malloc(sizeof(char) * message_length);
+  snprintf(usage, message_length, usage_format, application_name);
+  exit_error(usage);
 }
 
 int connect_to_server(char *server_hostname, char *server_port_no) {
@@ -67,7 +69,7 @@ int connect_to_server(char *server_hostname, char *server_port_no) {
   int addr_result =
       getaddrinfo(server_hostname, server_port_no, &hints, &result);
   if (addr_result != 0) {
-    log_error(gai_strerror(addr_result));
+    exit_error(gai_strerror(addr_result));
   }
 
   int sock_fd;
@@ -79,7 +81,7 @@ int connect_to_server(char *server_hostname, char *server_port_no) {
     }
 
     if (connect(sock_fd, rp->ai_addr, rp->ai_addrlen) != -1) {
-      break; /* Success */
+      break; /* success */
     }
 
     close(sock_fd);

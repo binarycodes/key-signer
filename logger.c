@@ -35,8 +35,9 @@ void log_message(ks_msg_type msg_level, const char *msg) {
 }
 
 void log_info(const char *msg) { log_message(INFO, msg); }
+void log_error(const char *msg) { log_message(ERROR, msg); }
 
-void log_error(const char *msg) {
+void exit_error(const char *msg) {
   log_message(ERROR, msg);
   exit(UNKNOWN_ERROR);
 }

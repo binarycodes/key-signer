@@ -1,5 +1,5 @@
 * Project Management
-** TODO general
+** TODO general [0/5]
 - [ ] require all communications to be encrypted
 - [ ] extend the client to also include user ssh key signing
 - [ ] figure out a method to distribute CA certificate (public) with user clients
